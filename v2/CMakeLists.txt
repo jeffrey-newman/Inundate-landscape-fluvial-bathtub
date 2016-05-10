@@ -19,6 +19,7 @@ set( sources
 		Print.cpp
 		ReadInMap_Impl.cpp
 		ReadInMap.cpp
+		Main.cpp
  )
 
 set ( headers
@@ -35,8 +36,22 @@ set ( headers
 		remove_processed.h
 		Types.h
 	)
+	
+SET ( utils
+		./util/coordinate_2d.h
+		./util/default_construction_functor.h
+		./util/dereference_proxy.h
+		./util/exceptions.h
+		./util/gdal_raster_iterator.h
+		./util/gdal_raster_lru.h
+		./util/gdal_raster.h
+		./util/raster_iterator.h
+		./util/raster_traits.h
+		./util/zip_range.h
+		./util/utility.h
+    )
 
 include_directories(eigen)
 
-add_executable(inundate "${sources}" "${headers}")
+add_executable(inundate "${sources}" "${headers}" "${utils}")
 target_link_libraries(inundate ${GDAL_LIBRARY} ${Boost_LIBRARIES})

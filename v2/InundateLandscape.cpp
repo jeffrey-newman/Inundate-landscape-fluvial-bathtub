@@ -18,6 +18,7 @@
 #include <Eigen/Dense>
 
 #include "Types.h"
+#include "util/gdal_raster.h"
 #include "ReadInMap.h"
 #include "Print.h"
 #include "Neighbourhood.h"
@@ -28,6 +29,9 @@
 #include "ReadGraphsFromFile.h"
 #include "IsChannel.h"
 
+typedef boost::shared_ptr<raster_util::gdal_raster<double> > DoubleRasterSPtr;
+
+DoubleRasterSPtr inundateLandscape(DoubleRasterSPtr dem, DoubleRasterSPtr hydro_connect, Graph & channel_grph, std::vector<GuageControl> & guages, )
 
 
 int main(int argc, char **argv)
