@@ -31,7 +31,162 @@
 
 typedef boost::shared_ptr<raster_util::gdal_raster<double> > DoubleRasterSPtr;
 
-DoubleRasterSPtr inundateLandscape(DoubleRasterSPtr dem, DoubleRasterSPtr hydro_connect, Graph & channel_grph, std::vector<GuageControl> & guages, )
+DoubleRasterSPtr inundateLandscape(DoubleRasterSPtr dem, DoubleRasterSPtr hydro_connect, Graph & channel_grph, std::vector<GuageControl> & guages, boost::optional<std::ifstream> & controls_file)
+{
+    //Check maps for consistency (same dimensions)
+    if (hydro_connect->NCols() != dem_map->NCols())
+    {
+        throw std::runtime_error("Number of columns in the two comparison maps non-identical");
+    }
+    
+    if (hydro_connect->NRows() != dem_map->NRows())
+    {
+        throw std::runtime_error("Number of rows in the two comparison maps non-identical");
+    }
+    
+    /****************************************************************************/
+    /*       Make Structures for looking up node ids and vertex descriptors     */
+    /****************************************************************************/
+    std::map<int, std::map<int, VertexDescriptor>  > channel_pixels;
+    std::pair<VertexIterator, VertexIterator> vp;
+    for (vp = boost::vertices(channel_grph); vp.first != vp.second; ++vp.first)
+    {
+        int i = channel_grph[*vp.first].row;
+        int j = channel_grph[*vp.first].col;
+        VertexDescriptor v = *vp.first;
+        channel_pixels[i].insert(std::make_pair(j, v));
+        channel_grph[*vp.first].elevation = dem_map->Get(i, j); //update elevation.
+    }
+    
+    VertexIDMap idMap;
+    VertexIterator di, dj;
+    for(boost::tie(di, dj) = boost::vertices(channel_grph); di != dj; ++di)
+    {
+        idMap.insert(std::make_pair(channel_grph[*di].node_id, (*di)));
+        if (channel_grph[*di].terminal_type == OUTFLOW)
+        {
+            if (channel_grph[*di].level == -999)
+            {
+                channel_grph[*di].level = outflow_levels;
+            }
+            
+        }
+        if (channel_grph[*di].terminal_type == SOURCE)
+        {
+            if (channel_grph[*di].level == -999)
+            {
+                channel_grph[*di].level = source_levels;
+            }
+            
+        }
+    }
+    
+    
+    
+    
+    //Identify guage nodes from a guage node file
+    /********************************************/
+    /*       Read in table of Guage  points     */
+    /********************************************/
+    std::cout << "\n\n*************************************\n";
+    std::cout <<     "*  Reading guage points and levels  *\n";
+    std::cout <<     "*************************************" << std::endl;
+    // Pause to continue. Read in file here.
+    if (guage_file != "no_file")
+    {
+        
+        std::vector<GuageControl> guages;
+        std::ifstream fs7(guage_table_path.string().c_str());
+        if (fs7.is_open())
+        {
+            GuageParser<std::string::const_iterator> g; // Our grammar
+            std::string str;
+            getline(fs7, str); // Header line.
+            while (getline(fs7, str))
+            {
+                if (!(str.empty() || str[0] == '#'))
+                {
+                    GuageControl guage;
+                    std::string::const_iterator iter = str.begin();
+                    std::string::const_iterator end = str.end();
+                    bool r = phrase_parse(iter, end, g, qi::space, guage);
+                    
+                    if (r && iter == end)
+                    {
+                        //Place the guage into the vector
+                        guages.push_back(guage);
+                    }
+                    else
+                    {
+                        std::cout << "-------------------------\n";
+                        std::cout << "Parsing failed:\n";
+                        std::cout << " At: " << str << "\n";
+                        std::cout << "-------------------------\n";
+                    }
+                }
+            }
+        }
+        
+        //Now place the guages into the channel_graph.
+        BOOST_FOREACH(GuageControl & guage, guages)
+        {
+            int row, col;
+            boost::tie(row, col) = getRasterCoordinates(guage.x_coord, guage.y_coord, demTransform);
+            //Search neighbourhood for nearest creek pixel.
+            bool iscreek = false;
+            VertexDescriptor creek_vertex;
+            boost::tie(iscreek, creek_vertex) = isCreek(row, col, channel_pixels);
+            if (iscreek)
+            {
+                //Find vertex in channel_graph
+                for (vp = boost::vertices(channel_grph); vp.first != vp.second; ++vp.first)
+                {
+                    if (channel_grph[*vp.first].row == row && channel_grph[*vp.first].col == col)
+                    {
+                        channel_grph[*vp.first].type = GUAGE_CNTRL;
+                        channel_grph[*vp.first].level = guage.level;
+                        break;
+                    }
+                }
+                if (vp.first == vp.second)
+                {
+                    std::cerr << " could not find guage in graph" << std::endl;
+                }
+                
+            }
+            else // search in neighbourhood for closest pixel
+            {
+                int neighd_size = 1;
+                bool is_found = false;
+                do
+                {
+                    boost::shared_ptr<Set> nh = get_neighbourhood(dem_map, row, col, neighd_size);
+                    BOOST_FOREACH(ChannelNode & loc, *nh)
+                    {
+                        bool iscreek = false;
+                        VertexDescriptor creek_vertex;
+                        boost::tie(iscreek, creek_vertex) = isCreek(loc.row, loc.col, channel_pixels);
+                        if (iscreek)
+                        {
+                            channel_grph[creek_vertex].type = GUAGE_CNTRL;
+                            channel_grph[creek_vertex].level = guage.level;
+                            is_found = true;
+                            break;
+                        }
+                    }
+                    ++neighd_size;
+                } while (neighd_size < 100 && !is_found);
+                
+                if (neighd_size >= 100)
+                {
+                    std::cerr << " could not find guage in graph" << std::endl;
+                }
+            }
+        }
+    }
+
+    
+}
 
 
 int main(int argc, char **argv)
