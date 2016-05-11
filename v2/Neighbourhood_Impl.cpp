@@ -11,13 +11,13 @@
 #include "Neighbourhood.cpp"
 
 template
-boost::shared_ptr<Set> get_neighbourhood(Map_Double_SPtr map, unsigned long i, unsigned long j, unsigned long size);
+boost::shared_ptr<Set> get_neighbourhood(raster_util::gdal_raster<double> &  map, unsigned long i, unsigned long j, unsigned long size);
 
 template
-boost::shared_ptr<Set> get_neighbourhood(Map_Int_SPtr map, unsigned long i, unsigned long j, unsigned long size);
+boost::shared_ptr<Set> get_neighbourhood(raster_util::gdal_raster<int> &  map, unsigned long i, unsigned long j, unsigned long size);
 
 template
-boost::shared_ptr<Set> find_adjacents(Map_Int_SPtr map, unsigned long i, unsigned long j, unsigned long size);
+boost::shared_ptr<Set> find_adjacents(raster_util::gdal_raster<int> &  map, unsigned long i, unsigned long j, unsigned long size);
 
 template
-boost::shared_ptr<std::vector<std::pair<int, int> > > find_immediate_adjacents(Map_Double_SPtr map, unsigned long i, unsigned long j);
+boost::shared_ptr<std::vector<std::pair<int, int> > > find_immediate_adjacents(raster_util::gdal_raster<double> &  map, unsigned long i, unsigned long j);

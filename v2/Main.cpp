@@ -7,11 +7,17 @@
 //
 
 #include <stdio.h>
+#include <string>
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+#include "ReadInControlsAndGuages.h"
 
 
 int main(int argc, char **argv)
 {
-    
+    namespace prog_opt = boost::program_options;
+    namespace fs = boost::filesystem;
     
     /**********************************/
     /*        Program options         */
@@ -37,7 +43,7 @@ int main(int argc, char **argv)
     double source_levels = 0.0;
     bool use_controls_file = false;
     
-    namespace prog_opt = boost::program_options;
+    
     prog_opt::options_description desc("Allowed options");
     desc.add_options()
     ("help,h", "produce help message")
@@ -82,35 +88,88 @@ int main(int argc, char **argv)
     //  fs::path fd_file_path(fd_file);
     fs::path hydro_paths_file_path(hydro_paths_file);
     fs::path output_file_path(output_file);
+    fs::path controls_file_path(controls_file);
 
     
     
-    /********************************************/
-    /* Print resultent DEM					    */
-    /********************************************/
+    // Check file exists
+    if (!fs::exists(channel_graph_path))
+    {
+        std::stringstream ss;
+        ss << channel_graph_path << " does not exist";
+        throw std::runtime_error(ss.str());
+        return (EXIT_FAILURE);
+    }
+    
+    if (!fs::exists(dem_file_path))
+    {
+        std::stringstream ss;
+        ss << dem_file_path << " does not exist";
+        throw std::runtime_error(ss.str());
+        return (EXIT_FAILURE);
+    }
+    
+    if (!fs::exists(hydro_paths_file_path))
+    {
+        std::stringstream ss;
+        ss << hydro_paths_file_path << " does not exist";
+        throw std::runtime_error(ss.str());
+        return (EXIT_FAILURE);
+    }
+    
+    
+    GuagesSPtr guages;
+    if (guage_file != "no_file")
+    {
+        if (!fs::exists(guage_table_path))
+        {
+            std::stringstream ss;
+            ss << guage_table_path << " does not exist";
+            throw std::runtime_error(ss.str());
+            return (EXIT_FAILURE);
+        }
+        
+        guages = readInGuages(guage_table_path);
+    }
+    
+    ControlsSPtr controls;
+    if(use_controls_file)
+    {
+        if (!fs::exists(controls_file_path))
+        {
+            std::stringstream ss;
+            ss << controls_file_path << " does not exist";
+            throw std::runtime_error(ss.str());
+            return (EXIT_FAILURE);
+        }
+        controls = readInControls(controls_file_path);
+    }
+    
+    
+    /**********************************/
+    /*       Create graph object      */
+    /**********************************/
+    Graph channel_grph;
+    
+    
+    /**********************************/
+    /*         Read in Graph           */
+    /**********************************/
     std::cout << "\n\n*************************************\n";
-    std::cout << "*         Saving output file        *\n";
-    std::cout << "*************************************" << std::endl;
-    std::string driverName = "GTiff";
-    write_map(output_file_path, GDT_Float64, output_map, demWKTprojection, demTransform, driverName);
+    std::cout <<     "*             Read in Graphs          *\n";
+    std::cout <<     "*************************************" << std::endl;
+    //    readGraphFromFile(control_graph_path, control_grph);
+    readGraphFromFile(channel_graph_path, channel_grph);
+
+    auto dem = raster_util::open_gdal_raster<double>(dem_file_path.string(), GA_ReadOnly);
+    auto hydro_connect = raster_util::open_gdal_raster<int>(hydro_paths_file_path.string(), GA_ReadOnly);
+    auto inundation = raster_util::create_gdal_raster_from_model<double>(output_file, dem);
+    inundation.setNoDataValue(0.0);
+    
+    inundateLandscape(inundation, dem, hydro_connect, channel_grph, guages, controls);
     
     return (EXIT_SUCCESS);
-    //	double no_changes_val = 0.0;
-    //	if (dem_map->HasNoDataValue()) no_changes_val = dem_map->NoDataValue();
-    //	Map_Double_SPtr changes_map(new Map_Double(feature_map->NRows(), feature_map->NCols(), no_changes_val));
-    //	changes_map->SetNoDataValue(no_changes_val);
-    
-    
-    //	boost::progress_display show_progress3(boost::num_vertices(channel_grph));
-    //	dfs_interpolate_visitor vis(dem_map, changes_map, show_progress3);
-    //	boost::depth_first_search(channel_grph, visitor(vis));
-    
-    /********************************************/
-    /* //Create map of downstream control IDs, upstream control IDs, Distance to downstram and upstream IDs					    */
-    /********************************************/
-    //	std::string driverName = "GTiff";
-    //	write_map(incised_dem_file_path, GDT_Float64, dem_map, demWKTprojection, demTransform, driverName);
-    //	write_map(changes_file_path, GDT_Float64, changes_map, demWKTprojection, demTransform, driverName);
+
     
 }
 

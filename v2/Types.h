@@ -13,10 +13,9 @@
 #include <tuple>
 #include <boost/shared_ptr.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include "Map_Matrix.h"
 
-template <typename DataType>
-using Map_Matrix_SPtr = boost::shared_ptr<Map_Matrix<DataType> >;
+
+
 
 //enum TNodeType{NOT_CNTRL = 1, OUTFLW_CNTRL = 2, GUAGE_CNTRL = 4, JUNCT_CNTRL = 8, SOURCE_CNTRL = 16};
 enum TNodeType{NOT_CNTRL = 1, TERMINAL_CNTRL = 2, GUAGE_CNTRL = 4, JUNCT_CNTRL = 8};
@@ -74,17 +73,17 @@ struct ChannelLink
 
 typedef std::vector<ChannelNode> Set;
 
-typedef Map_Matrix<double> Map_Double;
-typedef boost::shared_ptr<Map_Double> Map_Double_SPtr;
-
-typedef Map_Matrix<int32_t> Map_Int;
-typedef boost::shared_ptr<Map_Int> Map_Int_SPtr;
-
-typedef Map_Matrix<bool> Map_Bool;
-typedef boost::shared_ptr<Map_Bool> Map_Bool_SPtr;
-
-//typedef std::vector<std::pair<Position, Position> > Move_Log;
-
+struct GuageControl
+{
+    double x_coord;
+    double y_coord;
+    double level;
+    
+    GuageControl() : x_coord(-1), y_coord(-1), level(-999)
+    {
+        
+    }
+};
 
 
 const int NON_FEATURE = 0;
