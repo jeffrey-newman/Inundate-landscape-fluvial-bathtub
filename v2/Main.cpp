@@ -14,7 +14,7 @@
 #include <blink/raster/utility.h> // To open rasters
 #include "ReadInControlsAndGuages.h"
 #include "ReadGraphsFromFile.h"
-#include "InundateLandscape.cpp"
+#include "InundateLandscape.h"
 
 
 int main(int argc, char **argv)

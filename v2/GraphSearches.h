@@ -16,66 +16,14 @@ private:
     std::vector<Edge> & removal_list;
 
 public:
-    CycleTerminator(std::vector<Edge> & _removal_list) : removal_list(_removal_list)
-    {
-        
-    }
-    
-    void back_edge(Edge e, const Graph& g) {
-        removal_list.push_back(e);
-    }
+    CycleTerminator(std::vector<Edge> & _removal_list);
+    void back_edge(Edge e, const Graph& g);
 };
 
 int
-leafBranchVisit(Graph & channel_graph, EdgeDescriptor e, int distance, int cutoff, std::vector<EdgeDescriptor> & edge_removal_list, std::vector<VertexDescriptor> & vertex_removal_list)
-{
-    VertexDescriptor u = boost::target(e, channel_graph);
-    ++distance;
-    
-    if (distance > cutoff) return (-1);
-    
-    if (channel_graph[u].type > 1)
-    {
-        edge_removal_list.push_back(e);
-        //vertex_removal_list.push_back(u);
-        return (distance);
-    }
-    
-    typedef boost::graph_traits<Graph>::out_edge_iterator OutIt;
-    OutIt e_it, e_end;
-    for (boost::tie(e_it, e_end) = boost::out_edges(u, channel_graph); e_it != e_end; e_it++)
-    {
-        if (*e_it != e)
-        {
-            int leaf_branch_dist = leafBranchVisit(channel_graph, *e_it, distance, cutoff, edge_removal_list, vertex_removal_list);
-            if (leaf_branch_dist == -1) return (leaf_branch_dist);
-            edge_removal_list.push_back(e);
-            vertex_removal_list.push_back(u);
-            return (leaf_branch_dist);
-        }
-    }
-    return (-1);
-}
-
+leafBranchVisit(Graph & channel_graph, EdgeDescriptor e, int distance, int cutoff, std::vector<EdgeDescriptor> & edge_removal_list, std::vector<VertexDescriptor> & vertex_removal_list);
 void
-leafBranchSearch(Graph& channel_graph,  VertexDescriptor channel_vertex, int cutoff, std::vector<EdgeDescriptor> & edge_removal_list, std::vector<VertexDescriptor> & vertex_removal_list)
-{
-    typedef boost::graph_traits<Graph>::out_edge_iterator OutIt;
-    OutIt e_it, e_end;
-    int count = 0;
-    int distance = 0;
-    for (boost::tie(e_it, e_end) = boost::out_edges(channel_vertex, channel_graph); e_it != e_end; e_it++)
-    {
-        //There should only be one....
-        distance = leafBranchVisit(channel_graph, *e_it, distance, cutoff, edge_removal_list, vertex_removal_list);
-        ++count;
-    }
-    if (count > 1)
-    {
-        std::cerr << "Error: should only be one out edge of a terminal node" << std::endl;
-    }
-    if (distance != -1) vertex_removal_list.push_back(channel_vertex);
-}
+leafBranchSearch(Graph& channel_graph,  VertexDescriptor channel_vertex, int cutoff, std::vector<EdgeDescriptor> & edge_removal_list, std::vector<VertexDescriptor> & vertex_removal_list);
 
 //Made recursive version instead....
 //void
@@ -134,100 +82,13 @@ leafBranchSearch(Graph& channel_graph,  VertexDescriptor channel_vertex, int cut
 
 
 std::pair<VertexDescriptor, int>
-controlSearchVisitOld(Graph & channel_graph, EdgeDescriptor e, int distance, VertexDescriptor start_vertex)
-{
-    VertexDescriptor u = boost::target(e, channel_graph);
-    if (channel_graph[u].type > 1)
-    {
-        return (std::make_pair(u, distance));
-    }
-    else
-    {
-        if (channel_graph[u].up_cntrl_id == -1)
-        {
-            channel_graph[u].up_cntrl_id = channel_graph[start_vertex].node_id;
-            channel_graph[u].up_cntrl_dist = distance;
-        }
-        else if (channel_graph[u].down_cntrl_id == -1)
-        {
-            channel_graph[u].down_cntrl_id = channel_graph[start_vertex].node_id;
-            channel_graph[u].down_cntrl_dist = distance;
-        }
-        
-        typedef boost::graph_traits<Graph>::out_edge_iterator OutIt;
-        OutIt e_it, e_end;
-        for (boost::tie(e_it, e_end) = boost::out_edges(u, channel_graph); e_it != e_end; e_it++)
-        {
-            if (*e_it != e)
-            {
-                ++distance;
-                return (controlSearchVisitOld(channel_graph, *e_it, distance, start_vertex));
-                break;
-            }
-        }
-    }
-    return (std::make_pair(u, distance));
-}
+controlSearchVisitOld(Graph & channel_graph, EdgeDescriptor e, int distance, VertexDescriptor start_vertex);
 
 std::pair<VertexDescriptor, int>
-controlSearchVisit(Graph & channel_graph, EdgeDescriptor e, int distance, VertexDescriptor start_vertex)
-{
-	VertexDescriptor u = boost::target(e, channel_graph);
-	if (channel_graph[u].type > 1)
-	{
-		return (std::make_pair(u, distance));
-	}
-	else
-	{
-		//if (channel_graph[u].up_cntrl_id == -1)
-		//{
-		//	channel_graph[u].up_cntrl_id = channel_graph[start_vertex].node_id;
-		//	channel_graph[u].up_cntrl_dist = distance;
-		//}
-		//else if (channel_graph[u].down_cntrl_id == -1)
-		//{
-			channel_graph[u].down_cntrl_id = channel_graph[start_vertex].node_id;
-			channel_graph[u].down_cntrl_dist = distance;
-		//}
-
-		typedef boost::graph_traits<Graph>::out_edge_iterator OutIt;
-		OutIt e_it, e_end;
-		for (boost::tie(e_it, e_end) = boost::out_edges(u, channel_graph); e_it != e_end; e_it++)
-		{
-			if (*e_it != e)
-			{
-				++distance;
-				std::pair<VertexDescriptor, int> target_pair = controlSearchVisit(channel_graph, *e_it, distance, start_vertex);
-				VertexDescriptor & target = target_pair.first;
-				int & net_distance = target_pair.second;
-				channel_graph[u].up_cntrl_id = channel_graph[target].node_id;
-				channel_graph[u].up_cntrl_dist = (net_distance - distance + 1);
-				return (target_pair);
-				break;
-			}
-		}
-	}
-	return (std::make_pair(u, distance));
-}
-
+controlSearchVisit(Graph & channel_graph, EdgeDescriptor e, int distance, VertexDescriptor start_vertex);
 
 void
-controlSearch(Graph& channel_graph,  VertexDescriptor channel_vertex, Graph& controls_graph, VertexDescriptor control_vertex, VertexIDMap control_vertex_map)
-{
-    typedef boost::graph_traits<Graph>::out_edge_iterator OutIt;
-    OutIt e_it, e_end;
-    for (boost::tie(e_it, e_end) = boost::out_edges(channel_vertex, channel_graph); e_it != e_end; e_it++)
-    {
-        int distance = 1;
-        VertexDescriptor channel_c;
-        boost::tie(channel_c, distance) = controlSearchVisit(channel_graph, *e_it, distance, channel_vertex);
-        VertexDescriptor cntrl_c = control_vertex_map[channel_graph[channel_c].node_id];
-        std::pair<EdgeDescriptor, bool> new_edge = boost::add_edge(control_vertex, cntrl_c, controls_graph);
-        controls_graph[new_edge.first].distance = distance;
-        
-    }
-}
-
+controlSearch(Graph& channel_graph,  VertexDescriptor channel_vertex, Graph& controls_graph, VertexDescriptor control_vertex, VertexIDMap control_vertex_map);
 
 //class dfs_interpolate_visitor :public boost::default_dfs_visitor
 //{

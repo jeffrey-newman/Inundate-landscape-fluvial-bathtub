@@ -13,7 +13,7 @@
 
 #include <Eigen/Dense>
 
-#include <blink/raster/gdal_raster.h>
+
 #include <blink/iterator/zip_range.h>
 
 #include "Types.h"
@@ -30,19 +30,14 @@
 //#include "ReadGraphsFromFile.h"
 #include "IsChannel.h"
 
-namespace raster_util = blink::raster;
-namespace raster_iterator = blink::iterator;
-typedef boost::shared_ptr<raster_util::gdal_raster<double> > DoubleRasterSPtr;
-typedef boost::shared_ptr<raster_util::gdal_raster<int> > IntRasterSPtr;
-typedef raster_util::gdal_raster<double> DoubleRaster;
-typedef raster_util::gdal_raster<int> IntRaster;
-typedef boost::optional< boost::shared_ptr< std::vector<GuageControl> > > GuagesSPtr;
-typedef boost::optional< boost::shared_ptr< std::vector<ChannelNode> > > ControlsSPtr;
+#include "InundateLandscape.h"
+
 
 
 void
-inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels = 1.0, double source_levels = 0.0, bool do_interp_hgl = false)
+inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels, double source_levels, bool do_interp_hgl)
 {
+    namespace raster_iterator = blink::iterator;
     /****************************************************************************/
     /*       Check maps for consistency                                         */
     /****************************************************************************/
