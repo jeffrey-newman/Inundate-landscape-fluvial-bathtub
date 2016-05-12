@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #include <boost/filesystem.hpp>
 #include <boost/smart_ptr.hpp>
@@ -70,12 +71,12 @@ readInGuages(const boost::filesystem::path & guage_file)
                     if (r && iter == end)
                     {
                         //Place the guage into the vector
-                        guages.push_back(guage);
+                        guages->push_back(guage);
                     }
                     else
                     {
                         std::cout << "-------------------------\n";
-                        std::cout << "Parsing guage file " + guage_file.string() " failed:\n";
+                        std::cout << "Parsing guage file " + guage_file.string() + " failed:\n";
                         std::cout << " At: " << str << "\n";
                         std::cout << "-------------------------\n";
                     }
@@ -133,7 +134,7 @@ readInControls(const boost::filesystem::path & controls_file)
     boost::shared_ptr<std::vector<ChannelNode> > controls( new std::vector<ChannelNode>);
     if (boost::filesystem::exists(controls_file))
     {
-        std::ifstream fs(guage_file.c_str());
+        std::ifstream fs(controls_file.c_str());
         if (fs.is_open())
         {
             ControlParser<std::string::const_iterator> g; // Our grammar
@@ -151,12 +152,12 @@ readInControls(const boost::filesystem::path & controls_file)
                     if (r && iter == end)
                     {
                         //Place the guage into the vector
-                        controls.push_back(control);
+                        controls->push_back(control);
                     }
                     else
                     {
                         std::cout << "-------------------------\n";
-                        std::cout << "Parsing controls file " + guage_file.string() " failed:\n";
+                        std::cout << "Parsing controls file " + controls_file.string() + " failed:\n";
                         std::cout << " At: " << str << "\n";
                         std::cout << "-------------------------\n";
                     }
@@ -165,13 +166,13 @@ readInControls(const boost::filesystem::path & controls_file)
         }
         else
         {
-            std::string msg = "Could not open controls file " + guage_file.string();
+            std::string msg = "Could not open controls file " + controls_file.string();
             throw std::runtime_error(msg);
         }
     }
     else
     {
-        std::string msg = "Controls file does not exist: " + guage_file.string();
+        std::string msg = "Controls file does not exist: " + controls_file.string();
         throw std::runtime_error(msg);
     }
     
@@ -197,7 +198,7 @@ writeControls(const boost::filesystem::path & file, Graph & channel_grph)
         {
             if (channel_grph[*(vp.first)].type > 1)
             {
-                fs3 << channel_grph[*(vp.first)].node_id << "\t" << channel_grph[*(vp.first)].row << "\t" << channel_grph[*(vp.first)].col << "\t" << channel_grph[*(vp.first)].type << "\t" <<
+                fs << channel_grph[*(vp.first)].node_id << "\t" << channel_grph[*(vp.first)].row << "\t" << channel_grph[*(vp.first)].col << "\t" << channel_grph[*(vp.first)].type << "\t" <<
                 channel_grph[*(vp.first)].level << std::endl;
             }
         }
@@ -206,7 +207,7 @@ writeControls(const boost::filesystem::path & file, Graph & channel_grph)
         {
             if (channel_grph[*(vp.first)].type == 1)
             {
-                fs3 << channel_grph[*(vp.first)].node_id << "\t" << channel_grph[*(vp.first)].row << "\t" << channel_grph[*(vp.first)].col << "\t" << channel_grph[*(vp.first)].type << "\t" <<
+                fs << channel_grph[*(vp.first)].node_id << "\t" << channel_grph[*(vp.first)].row << "\t" << channel_grph[*(vp.first)].col << "\t" << channel_grph[*(vp.first)].type << "\t" <<
                 channel_grph[*(vp.first)].level << std::endl;
             }
         }

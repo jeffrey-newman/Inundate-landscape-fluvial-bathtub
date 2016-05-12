@@ -11,13 +11,17 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <blink/raster/utility.h> // To open rasters
 #include "ReadInControlsAndGuages.h"
+#include "ReadGraphsFromFile.h"
+#include "InundateLandscape.cpp"
 
 
 int main(int argc, char **argv)
 {
     namespace prog_opt = boost::program_options;
     namespace fs = boost::filesystem;
+    namespace raster_util = blink::raster;
     
     /**********************************/
     /*        Program options         */
@@ -164,7 +168,7 @@ int main(int argc, char **argv)
     auto dem = raster_util::open_gdal_raster<double>(dem_file_path.string(), GA_ReadOnly);
     auto hydro_connect = raster_util::open_gdal_raster<int>(hydro_paths_file_path.string(), GA_ReadOnly);
     auto inundation = raster_util::create_gdal_raster_from_model<double>(output_file, dem);
-    inundation.setNoDataValue(0.0);
+    const_cast<GDALRasterBand *>(inundation.get_gdal_band())->SetNoDataValue(0.0);
     
     inundateLandscape(inundation, dem, hydro_connect, channel_grph, guages, controls);
     
