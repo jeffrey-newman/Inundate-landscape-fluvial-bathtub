@@ -12,6 +12,7 @@
 #include <blink/raster/gdal_raster.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/optional.hpp>
+#include "Types.h"
 
 namespace raster_util = blink::raster;
 typedef boost::shared_ptr<raster_util::gdal_raster<double> > DoubleRasterSPtr;

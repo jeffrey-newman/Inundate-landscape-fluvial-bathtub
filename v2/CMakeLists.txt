@@ -14,14 +14,22 @@ include_directories(${Boost_INCLUDE_DIRS} )
 include_directories(${AHHZ_RASTER_UTIL} )
 include_directories(${AHHZ_RASTER_ITERATOR} )
 
-set( sources
+set( exe_srcs
+        Main.cpp
+        InundateLandscape.h
+)
+
+set( lib_sources
 		InundateLandscape.cpp
-		Main.cpp
 		Neighbourhood.cpp
 		Neighbourhood_Impl.cpp
+        GraphSearches.cpp
+        IsChannel.cpp
+        PrintGraphsToFile.cpp
+        RasterCoordinates.cpp
  )
 
-set ( headers
+set ( lib_headers
 		GraphSearches.h
 		IsChannel.h
 		PrintGraphsToFile.h
@@ -31,9 +39,23 @@ set ( headers
 		remove_processed.h
 		Types.h
 		Neighbourhood.h
+        InundateLandscape.h
 	)
 
 include_directories(eigen)
 
-add_executable(inundate "${sources}" "${headers}")
+file(GLOB_RECURSE AHHZ_Utils
+"${AHHZ_RASTER_UTIL}/*.h"
+"${AHHZ_RASTER_UTIL}/*.hpp"
+"${AHHZ_RASTER_UTIL}/*.cpp"
+"${AHHZ_RASTER_ITERATOR}/*.h"
+"${AHHZ_RASTER_ITERATOR}/*.hpp"
+"${AHHZ_RASTER_ITERATOR}/*.cpp"
+)
+
+
+add_library(inundate "${lib_sources}" "${lib_headers}" "${AHHZ_Utils}")
 target_link_libraries(inundate ${GDAL_LIBRARY} ${Boost_LIBRARIES})
+
+add_executable(INUNDATE "${exe_srcs}" )
+target_link_libraries(INUNDATE inundate)
