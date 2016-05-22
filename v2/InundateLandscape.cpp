@@ -35,7 +35,7 @@
 
 
 void
-inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels, double source_levels, bool do_interp_hgl)
+inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, IntRaster & mask, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels, double source_levels, bool do_interp_hgl)
 {
     namespace raster_iterator = blink::iterator;
     /****************************************************************************/
@@ -411,21 +411,32 @@ inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hy
     //    Position channelloc(-9, -9);
     
     
-    auto zip = raster_iterator::make_zip_range(std::ref(dem), std::ref(hydro_connect), std::ref(inundation));
+    auto zip = raster_iterator::make_zip_range(std::ref(dem), std::ref(hydro_connect), std::ref(mask), std::ref(inundation));
     for (auto i : zip)
     {
         const double & pixel_elevation = std::get<0>(i);
         const int & channel_id = std::get<1>(i);
-        auto & level = std::get<2>(i);
+        const int & v_mask = std::get<2>(i);
+        auto & level = std::get<3>(i);
         
         if (channel_id != no_connection)
         {
-
-            level = channel_grph[idMap[channel_id]].level ;
-            if (pixel_elevation < level)
+            if ( v_mask != 0)
             {
-                level = level - pixel_elevation;
+                level = channel_grph[idMap[channel_id]].level ;
+                if (pixel_elevation < level)
+                {
+                    level = level - pixel_elevation;
+                }
+                else
+                {
+                    level = 0.0;
+                }
             }
+        }
+        else
+        {
+            level = 0.0;
         }
         ++show_progress3;
     }
