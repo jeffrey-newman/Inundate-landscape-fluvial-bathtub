@@ -24,7 +24,7 @@ typedef boost::optional< boost::shared_ptr< std::vector<ChannelNode> > > Control
 
 
 void
-inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels = 1.0, double source_levels = 0.0, bool do_interp_hgl = false);
+inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, IntRaster & mask, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels = 1.0, double source_levels = 0.0, bool do_interp_hgl = false, boost::filesystem::path control_grph_save_path = "control_graph", boost::filesystem::path grph_save_path = "channel_graph");
 
 #endif /* InundateLandscape_h */
 

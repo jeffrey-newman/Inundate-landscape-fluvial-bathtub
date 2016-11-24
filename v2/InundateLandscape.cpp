@@ -35,7 +35,7 @@
 
 
 void
-inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, IntRaster & mask, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels, double source_levels, bool do_interp_hgl)
+inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hydro_connect, IntRaster & mask, Graph & channel_grph, GuagesSPtr guages, ControlsSPtr controls, double outflow_levels, double source_levels, bool do_interp_hgl, boost::filesystem::path control_grph_save_path, boost::filesystem::path grph_save_path)
 {
     namespace raster_iterator = blink::iterator;
     /****************************************************************************/
@@ -383,7 +383,7 @@ inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hy
     std::cout <<     "*  Printing control Graph to file   *\n";
     std::cout <<     "*************************************" << std::endl;
     std::string controls_file_name = "control_graph";
-    printGraphsToFile(controls_grph, controls_file_name);
+    printGraphsToFile(controls_grph, control_grph_save_path.string());
     
     /********************************************/
     /*       Print Channel graphs to file       */
@@ -392,7 +392,7 @@ inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hy
     std::cout <<     "*  Printing channel Graph to file   *\n";
     std::cout <<     "*************************************" << std::endl;
     std::string filename = "channel_graph";
-    printGraphsToFile(channel_grph, filename);
+    printGraphsToFile(channel_grph, grph_save_path.string());
     
     
     
@@ -418,19 +418,29 @@ inundateLandscape( DoubleRaster & inundation, DoubleRaster & dem, IntRaster & hy
         const int & channel_id = std::get<1>(i);
         const int & v_mask = std::get<2>(i);
         auto & level = std::get<3>(i);
-        
+
         if (channel_id != no_connection)
         {
             if ( v_mask != 0)
             {
-                level = channel_grph[idMap[channel_id]].level ;
-                if (pixel_elevation < level)
+                level = channel_grph[idMap[channel_id]].level;
+                if (channel_grph[idMap[channel_id]].elevation > pixel_elevation)
                 {
-                    level = level - pixel_elevation;
+                    //Then something is wrong!
+                    std::cout << "something is wrong with hydro connect";
+                    level = 0.0;
+
                 }
                 else
                 {
-                    level = 0.0;
+                    if (pixel_elevation < level)
+                    {
+                        level = level - pixel_elevation;
+                    }
+                    else
+                    {
+                        level = 0.0;
+                    }
                 }
             }
         }

@@ -175,6 +175,7 @@ readInControls(const boost::filesystem::path & controls_file)
         std::string msg = "Controls file does not exist: " + controls_file.string();
         throw std::runtime_error(msg);
     }
+    return (controls);
     
 }
 
